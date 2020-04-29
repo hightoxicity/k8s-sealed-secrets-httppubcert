@@ -31,9 +31,9 @@ var (
 	listenaddress   = flag.String("listenaddress", ":8080", "Webserver address")
 	certpath        = flag.String("certpath", "/cert", "Exposed cert path on webserver")
 
-	config          *rest.Config
-	crtMu           sync.RWMutex
-	lastCrt         string
+	config  *rest.Config
+	crtMu   sync.RWMutex
+	lastCrt string
 )
 
 func GetClientset() (cs *kubernetes.Clientset, retErr error) {
