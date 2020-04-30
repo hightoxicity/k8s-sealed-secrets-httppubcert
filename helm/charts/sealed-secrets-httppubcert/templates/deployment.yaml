@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sealed-secrets-httppubcert.fullname" . }}
+  labels:
+{{ include "sealed-secrets-httppubcert.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "sealed-secrets-httppubcert.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "sealed-secrets-httppubcert.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ include "sealed-secrets-httppubcert.fullname" . }}
+      automountServiceAccountToken: true
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          {{- with .Values.httppubcert.command }}
+          command:
+            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          {{- with .Values.httppubcert.args }}
+          args:
+            {{- range $key, $cmd := . }}
+            - {{ tpl $cmd $ }}
+            {{- end }}
+          {{- end }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.httppubcert.ports }}
+          ports:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.httppubcert.livenessProbe }}
+          livenessProbe:
+            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          {{- with .Values.httppubcert.readinessProbe }}
+          readinessProbe:
+            {{- tpl (toYaml .) $ | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

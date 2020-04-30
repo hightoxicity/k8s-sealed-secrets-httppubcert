@@ -1,0 +1,10 @@
+sealed-secrets:
+  enabled: true
+
+sealed-secrets-httppubcert:
+  enabled: true
+
+secret:
+  crt: ""
+  key: ""
+  nameSuffix: ""

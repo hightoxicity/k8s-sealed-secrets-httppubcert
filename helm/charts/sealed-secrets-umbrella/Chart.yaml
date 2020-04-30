@@ -1,0 +1,8 @@
+apiVersion: v1
+description: A Helm chart to provide the secret to sealed-secrets
+name: sealed-secrets-umbrella
+version: 1.0.0
+appVersion: 0.8.1
+maintainers:
+- name: hightoxicity
+  email: djnos14@hotmail.com
