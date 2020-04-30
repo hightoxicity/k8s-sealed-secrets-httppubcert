@@ -13,6 +13,7 @@ import (
 	"sync"
 	"syscall"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	api "k8s.io/kubernetes/pkg/apis/core"
 
 	"k8s.io/api/core/v1"
@@ -31,9 +32,10 @@ var (
 	listenaddress   = flag.String("listenaddress", ":8080", "Webserver address")
 	certpath        = flag.String("certpath", "/cert", "Exposed cert path on webserver")
 
-	config  *rest.Config
-	crtMu   sync.RWMutex
-	lastCrt string
+	config      *rest.Config
+	crtMu       sync.RWMutex
+	lastCrt     string
+	lastCrtTime metav1.Time
 )
 
 func GetClientset() (cs *kubernetes.Clientset, retErr error) {
@@ -94,10 +96,19 @@ func main() {
 					}
 					for labName, labValue := range secret.ObjectMeta.Labels {
 						if "sealedsecrets.bitnami.com/sealed-secrets-key" == labName && "active" == labValue {
-							log.Printf("I got the fish: %s\n", secret.ObjectMeta.Name)
-							crtMu.Lock()
-							lastCrt = string(secret.Data["tls.crt"])
-							crtMu.Unlock()
+							if *verbose {
+								log.Printf("I got an active sealed-secrets secret fish: %s\n", secret.ObjectMeta.Name)
+							}
+							if lastCrtTime.Before(&secret.ObjectMeta.CreationTimestamp) {
+								if *verbose {
+									log.Printf("%s < %s\n", lastCrtTime, secret.ObjectMeta.CreationTimestamp)
+								}
+								cert := string(secret.Data["tls.crt"])
+								crtMu.Lock()
+								lastCrt = cert
+								lastCrtTime = secret.ObjectMeta.CreationTimestamp
+								crtMu.Unlock()
+							}
 						}
 					}
 				}
